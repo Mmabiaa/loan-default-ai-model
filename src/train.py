@@ -1,23 +1,19 @@
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
-import joblib
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay, roc_curve, auc
 
-from preprocess import load_data, preprocess
+# Confusion Matrix
+ConfusionMatrixDisplay.from_estimator(model, X_test, y_test)
+plt.title("Confusion Matrix")
+plt.show()
 
-df = load_data("data/raw.csv")
-X, y = preprocess(df)
+# ROC Curve
+y_probs = model.predict_proba(X_test)[:, 1]
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
+fpr, tpr, _ = roc_curve(y_test, y_probs)
+roc_auc = auc(fpr, tpr)
 
-model = RandomForestClassifier(n_estimators=100)
-model.fit(X_train, y_train)
-
-y_pred = model.predict(X_test)
-
-print(classification_report(y_test, y_pred))
-
-joblib.dump(model, "models/model.pkl")
-print("Model saved!")
+plt.plot(fpr, tpr)
+plt.title(f"ROC Curve (AUC = {roc_auc:.2f})")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.show()
