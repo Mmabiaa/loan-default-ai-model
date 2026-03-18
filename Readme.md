@@ -99,15 +99,13 @@ curl -X POST http://127.0.0.1:8000/predict \
 
 ## 📈Model Accuracy
 Metrics used:
+![](/images/matrix.png)
 
-Accuracy
-
-
-Precision
-
-Recall (critical for default detection)
+Accuracy & Precision
+![](/images/Learning_Curve.png)
 
 ROC-AUC (primary metric)
+![](/images/ROC_curve.png)
 
 ### 🧠 Why XGBoost?
 
