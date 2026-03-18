@@ -1,0 +1,10 @@
+{
+    "age": 30,
+    "income": 1500,
+    "loan_amount": 500,
+    "savings_balance": 200,
+    "missed_payments": 1,
+    "loan_duration": 6,
+    "debt_to_income": 0.3,
+    "savings_ratio": 0.4
+  }
