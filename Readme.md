@@ -1,37 +1,37 @@
-# 🚀 Loan Default Prediction AI (Susu Digital)
+# 🚀 CrediSense AI 
 
-An advanced machine learning system for predicting loan default risk in microfinance institutions, tailored for African financial ecosystems.
+An advanced machine learning system for predicting loan default risk in microfinance institutions, tailored for African financial ecosystems. A scalable, explainable AI system for predicting loan default risk and optimizing lending decisions in microfinance environments like Susu Digital.
 
 ---
 
 ## 🧠 Overview
 
-This project builds a **production-ready credit risk scoring system** using machine learning.
+CrediSense AI is an advanced machine learning system designed to predict loan default risk in microfinance environments.
 
-It is designed to power **Susu Digital**, enabling:
-- Intelligent loan approvals
-- Risk-based decision making
-- Fraud and default prevention
+Built for platforms like Susu Digital, it enables:
+- Data-driven lending decisions
+- Risk-aware credit scoring
+- Explainable AI insights
 
 ---
 
 ## 🎯 Key Features
 
-- 🔥 XGBoost-based classification model
-- 📊 Hyperparameter tuning with GridSearchCV
-- 📈 ROC-AUC performance optimization
-- 📉 Learning curves & model evaluation
-- 🧪 API testing via JSON
-- 🌍 Synthetic Ghanaian financial dataset
-- 🚀 FastAPI deployment-ready backend
+- XGBoost model with hyperparameter tuning
+- 1M+ synthetic financial dataset
+- SHAP explainability (global + local)
+- Risk threshold optimization
+- REST API with FastAPI
+- Production-ready architecture
 
 ---
 
-## 🏗️ Architecture
-```
-Data → Feature Engineering → Model Training → Evaluation → API → Client App
-```
+## 📊 Model Capabilities
 
+- Predict default probability
+- Classify risk (Low / Medium / High)
+- Optimize decision thresholds
+- Explain predictions using SHAP
 
 ---
 
@@ -39,7 +39,6 @@ Data → Feature Engineering → Model Training → Evaluation → API → Clien
 
 ### Sources:
 - Synthetic dataset (generated)
-- Kaggle: "Give Me Some Credit"
 
 ### Features:
 - Age
@@ -62,6 +61,7 @@ Data → Feature Engineering → Model Training → Evaluation → API → Clien
 - XGBoost
 - FastAPI
 - Matplotlib
+- SHAP
 
 ---
 
@@ -89,13 +89,29 @@ cd api
 uvicorn main:app --reload
 ```
 
-### 5. Test API
+### 5. API Testing
 
 ```bash
 curl -X POST http://127.0.0.1:8000/predict \
 -H "Content-Type: application/json" \
 -d @tests/test.json
 ```
+---
+## 📈 Risk Threshold Optimization
+
+Instead of fixed 0.5 threshold:
+- Model finds optimal threshold using Precision-Recall tradeoff
+- Improves recall (catching defaulters)
+- Reduces financial risk
+
+---
+### 🔍 Explainability (SHAP)
+
+- Feature importance visualization
+- Per-user explanation
+- Transparent decision-making
+
+---
 
 ## 📈Model Accuracy
 Metrics used:
@@ -107,24 +123,6 @@ Accuracy & Precision
 ROC-AUC (primary metric)
 ![](/images/ROC_curve.png)
 
-### 🧠 Why XGBoost?
-
-XGBoost is a state-of-the-art gradient boosting algorithm widely used in:
-
-Banking
-
-Credit scoring
-
-Fraud detection
-
-It provides:
-
-High accuracy
-
-Robust performance on tabular data
-
-Feature importance insights
-
 ### 🔮 Future Improvements
 
 Deep learning (LSTM for time-series financial behavior)
@@ -132,8 +130,6 @@ Deep learning (LSTM for time-series financial behavior)
 Real-time streaming predictions
 
 Integration with mobile money APIs
-
-Explainable AI (SHAP values)
 
 React dashboard for loan officers
 
@@ -146,7 +142,14 @@ Financial inclusion
 Risk reduction
 
 Data-driven lending
+---
+### 🤝 Contribution Guide
 
+- Fork the repo
+- Create feature branch
+- Commit changes
+- Submit PR
+---
 ### 👨‍💻 Author
 
 Boateng Prince Agyenim (Mmabiaa)

@@ -1,18 +1,20 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+import os
 import joblib
 import numpy as np
-import os
 
-app = FastAPI()
+app = FastAPI(title="CrediSense AI")
 
-# Fix path
+# Load model
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-model_path = os.path.join(BASE_DIR, "models", "model.pkl")
 
-model = joblib.load(model_path)
+model = joblib.load(os.path.join(BASE_DIR, "models", "model.pkl"))
+threshold = joblib.load(os.path.join(BASE_DIR, "models", "threshold.pkl"))
 
-# ✅ Define request schema
+# -------------------------
+# REQUEST MODEL
+# -------------------------
 class LoanRequest(BaseModel):
     age: int
     income: float
@@ -22,14 +24,22 @@ class LoanRequest(BaseModel):
     loan_duration: int
     debt_to_income: float
     savings_ratio: float
+    payment_stress: float
 
+# -------------------------
+# ROUTES
+# -------------------------
 @app.get("/")
 def home():
-    return {"message": "Loan Default Prediction API"}
+    return {"message": "CrediSense AI - Loan Risk API"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 @app.post("/predict")
 def predict(data: LoanRequest):
-    input_data = np.array([[
+    features = np.array([[
         data.age,
         data.income,
         data.loan_amount,
@@ -37,18 +47,20 @@ def predict(data: LoanRequest):
         data.missed_payments,
         data.loan_duration,
         data.debt_to_income,
-        data.savings_ratio
+        data.savings_ratio,
+        data.payment_stress
     ]])
 
-    prediction = model.predict(input_data)
-    probability = model.predict_proba(input_data)
+    prob = model.predict_proba(features)[0][1]
+    pred = int(prob > threshold)
 
     return {
-        "default_prediction": int(prediction[0]),
-        "risk_probability": float(probability[0][1]),
+        "default_prediction": pred,
+        "risk_probability": float(prob),
         "risk_level": (
-            "HIGH" if probability[0][1] > 0.7 else
-            "MEDIUM" if probability[0][1] > 0.4 else
+            "HIGH" if prob > 0.75 else
+            "MEDIUM" if prob > 0.4 else
             "LOW"
-        )
+        ),
+        "threshold_used": float(threshold)
     }
