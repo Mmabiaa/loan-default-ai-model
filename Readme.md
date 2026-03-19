@@ -1,6 +1,6 @@
-# 🚀 Loan Default Prediction AI (Susu Digital)
+# 🚀 CrediSense AI for Loan Default Prediction (Susu Digital)
 
-An advanced machine learning system for predicting loan default risk in microfinance institutions, tailored for African financial ecosystems.
+An advanced machine learning system for predicting loan default risk in microfinance institutions, tailored for African financial ecosystems. A scalable, explainable AI system for predicting loan default risk and optimizing lending decisions in microfinance environments like Susu Digital.
 
 ---
 
