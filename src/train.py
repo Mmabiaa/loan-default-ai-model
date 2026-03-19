@@ -5,35 +5,49 @@ import joblib
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import classification_report, roc_auc_score, roc_curve
-from xgboost import XGBClassifier
+from sklearn.metrics import (
+    classification_report,
+    roc_auc_score,
+    roc_curve,
+    precision_recall_curve
+)
 
-# Load dataset
+from xgboost import XGBClassifier
+import shap
+
+# -------------------------
+# LOAD DATA
+# -------------------------
 df = pd.read_csv("data/raw.csv")
 
-# Features
 X = df.drop("default", axis=1)
 y = df["default"]
 
-# Split
+# -------------------------
+# SPLIT
+# -------------------------
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
-# Model
-xgb = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+# -------------------------
+# MODEL + TUNING
+# -------------------------
+xgb = XGBClassifier(
+    eval_metric='logloss',
+    n_jobs=-1
+)
 
-# Hyperparameter tuning
 param_grid = {
     "n_estimators": [100, 200],
-    "max_depth": [3, 5, 7],
-    "learning_rate": [0.01, 0.1],
+    "max_depth": [4, 6],
+    "learning_rate": [0.05, 0.1],
     "subsample": [0.8, 1.0]
 }
 
 grid = GridSearchCV(
-    estimator=xgb,
-    param_grid=param_grid,
+    xgb,
+    param_grid,
     scoring='roc_auc',
     cv=3,
     verbose=2,
@@ -41,38 +55,58 @@ grid = GridSearchCV(
 )
 
 grid.fit(X_train, y_train)
-
-best_model = grid.best_estimator_
+model = grid.best_estimator_
 
 print("🔥 Best Params:", grid.best_params_)
 
-# Predictions
-y_pred = best_model.predict(X_test)
-y_probs = best_model.predict_proba(X_test)[:, 1]
+# -------------------------
+# EVALUATION
+# -------------------------
+y_probs = model.predict_proba(X_test)[:, 1]
+y_pred = (y_probs > 0.5).astype(int)
 
-# Metrics
 print("\nClassification Report:\n", classification_report(y_test, y_pred))
 print("ROC AUC:", roc_auc_score(y_test, y_probs))
 
-# ROC Curve
+# -------------------------
+# RISK THRESHOLD OPTIMIZATION
+# -------------------------
+precision, recall, thresholds = precision_recall_curve(y_test, y_probs)
+
+# Choose threshold where recall is high but precision still decent
+optimal_idx = np.argmax(recall - (1 - precision))
+optimal_threshold = thresholds[optimal_idx]
+
+print(f"✅ Optimal Risk Threshold: {optimal_threshold:.2f}")
+
+# -------------------------
+# ROC CURVE
+# -------------------------
 fpr, tpr, _ = roc_curve(y_test, y_probs)
 
 plt.plot(fpr, tpr)
-plt.title("ROC Curve (XGBoost)")
-plt.xlabel("False Positive Rate")
-plt.ylabel("True Positive Rate")
+plt.title("ROC Curve")
+plt.xlabel("FPR")
+plt.ylabel("TPR")
 plt.show()
 
-# Feature Importance
-importances = best_model.feature_importances_
-features = X.columns
+# -------------------------
+# SHAP (Sampled)
+# -------------------------
+sample = X_train.sample(2000, random_state=42)
 
-plt.barh(features, importances)
-plt.title("Feature Importance")
-plt.show()
+explainer = shap.Explainer(model)
+shap_values = explainer(sample)
 
-# Save model
+shap.summary_plot(shap_values, sample)
+shap.plots.bar(shap_values)
+
+# -------------------------
+# SAVE EVERYTHING
+# -------------------------
 os.makedirs("models", exist_ok=True)
-joblib.dump(best_model, "models/model.pkl")
 
-print("✅ XGBoost model saved!")
+joblib.dump(model, "models/model.pkl")
+joblib.dump(optimal_threshold, "models/threshold.pkl")
+
+print("✅ Model + threshold saved!")
