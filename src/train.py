@@ -1,29 +1,17 @@
 import os
 import pandas as pd
-import joblib
 import numpy as np
+import joblib
 import matplotlib.pyplot as plt
 
-from sklearn.model_selection import train_test_split, learning_curve
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import (
-    classification_report,
-    confusion_matrix,
-    ConfusionMatrixDisplay,
-    roc_curve,
-    auc,
-    accuracy_score,
-    precision_score,
-    recall_score
-)
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.metrics import classification_report, roc_auc_score, roc_curve
+from xgboost import XGBClassifier
 
-# Load data
+# Load dataset
 df = pd.read_csv("data/raw.csv")
 
-# Feature Engineering
-df["debt_to_income"] = df["loan_amount"] / (df["income"] + 1)
-df["savings_ratio"] = df["savings_balance"] / (df["loan_amount"] + 1)
-
+# Features
 X = df.drop("default", axis=1)
 y = df["default"]
 
@@ -32,54 +20,59 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
-# Train model
-model = RandomForestClassifier(n_estimators=100)
-model.fit(X_train, y_train)
+# Model
+xgb = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+
+# Hyperparameter tuning
+param_grid = {
+    "n_estimators": [100, 200],
+    "max_depth": [3, 5, 7],
+    "learning_rate": [0.01, 0.1],
+    "subsample": [0.8, 1.0]
+}
+
+grid = GridSearchCV(
+    estimator=xgb,
+    param_grid=param_grid,
+    scoring='roc_auc',
+    cv=3,
+    verbose=2,
+    n_jobs=-1
+)
+
+grid.fit(X_train, y_train)
+
+best_model = grid.best_estimator_
+
+print("🔥 Best Params:", grid.best_params_)
 
 # Predictions
-y_pred = model.predict(X_test)
-y_probs = model.predict_proba(X_test)[:, 1]
+y_pred = best_model.predict(X_test)
+y_probs = best_model.predict_proba(X_test)[:, 1]
 
 # Metrics
-print("Accuracy:", accuracy_score(y_test, y_pred))
-print("Precision:", precision_score(y_test, y_pred))
-print("Recall:", recall_score(y_test, y_pred))
 print("\nClassification Report:\n", classification_report(y_test, y_pred))
-
-# Confusion Matrix
-ConfusionMatrixDisplay.from_estimator(model, X_test, y_test)
-plt.title("Confusion Matrix")
-plt.show()
+print("ROC AUC:", roc_auc_score(y_test, y_probs))
 
 # ROC Curve
 fpr, tpr, _ = roc_curve(y_test, y_probs)
-roc_auc = auc(fpr, tpr)
 
 plt.plot(fpr, tpr)
-plt.title(f"ROC Curve (AUC = {roc_auc:.2f})")
+plt.title("ROC Curve (XGBoost)")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
 plt.show()
 
-# Learning Curve
-train_sizes, train_scores, test_scores = learning_curve(
-    model, X, y, cv=5, scoring='accuracy'
-)
+# Feature Importance
+importances = best_model.feature_importances_
+features = X.columns
 
-train_mean = np.mean(train_scores, axis=1)
-test_mean = np.mean(test_scores, axis=1)
-
-plt.plot(train_sizes, train_mean, label="Training Accuracy")
-plt.plot(train_sizes, test_mean, label="Validation Accuracy")
-
-plt.xlabel("Training Size")
-plt.ylabel("Accuracy")
-plt.title("Learning Curve")
-plt.legend()
+plt.barh(features, importances)
+plt.title("Feature Importance")
 plt.show()
 
 # Save model
 os.makedirs("models", exist_ok=True)
-joblib.dump(model, "models/model.pkl")
+joblib.dump(best_model, "models/model.pkl")
 
-print("✅ Model saved at:", os.path.abspath("models/model.pkl"))
+print("✅ XGBoost model saved!")
